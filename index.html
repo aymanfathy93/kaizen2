@@ -1,0 +1,595 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14283C">
+<title>الاقتراحات والكايزن</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --steel:#E7EBEF; --paper:#FFFFFF; --ink:#14283C; --ink2:#5A6B7C; --line:#D3DAE1;
+  --safety:#F5B800; --ok:#17834F; --no:#C23B2E; --wait:#B37600; --study:#2F6DB0; --mgmt:#6B4FA0;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--steel);color:var(--ink);font-family:'Readex Pro','Segoe UI',Tahoma,sans-serif;font-size:15px;line-height:1.55;-webkit-tap-highlight-color:transparent}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0}
+:focus-visible{outline:3px solid var(--safety);outline-offset:2px}
+[hidden]{display:none!important}
+.wrap{max-width:560px;margin:0 auto;min-height:100vh;position:relative;padding-bottom:calc(96px + env(safe-area-inset-bottom))}
+
+/* ---------- login ---------- */
+#login{min-height:100vh;display:flex;flex-direction:column}
+.login-top{background:var(--ink);color:#fff;padding:56px 24px 40px;position:relative;overflow:hidden}
+.kanji{position:absolute;inset-inline-start:-10px;bottom:-34px;font-size:150px;font-weight:700;line-height:1;color:rgba(255,255,255,.06);letter-spacing:-6px;pointer-events:none}
+.login-top h1{font-size:30px;font-weight:700;line-height:1.25;position:relative}
+.login-top h1 span{display:block;font-weight:300;font-size:18px;opacity:.75;margin-top:4px}
+.stripe{height:8px;background:repeating-linear-gradient(-45deg,var(--safety) 0 12px,var(--ink) 12px 24px)}
+.login-form{padding:28px 24px;display:grid;gap:16px}
+.field label{display:block;font-size:13px;color:var(--ink2);margin-bottom:6px;font-weight:500}
+.input{width:100%;background:var(--paper);border:1.5px solid var(--line);border-radius:10px;padding:13px 14px;font-size:17px}
+.input:focus{border-color:var(--ink);outline:none}
+.remember{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--ink2)}
+.remember input{width:18px;height:18px;accent-color:var(--ink)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--ink);color:#fff;border-radius:12px;padding:14px 18px;font-weight:600;font-size:16px}
+.btn:disabled{opacity:.55}
+.btn.safety{background:var(--safety);color:var(--ink)}
+.err{color:var(--no);font-size:14px;min-height:20px}
+
+/* ---------- header ---------- */
+.top{background:var(--ink);color:#fff;padding:calc(18px + env(safe-area-inset-top)) 18px 18px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;position:relative;overflow:hidden}
+.top .kanji{font-size:96px;bottom:-26px;inset-inline-start:auto;inset-inline-end:60px}
+.who{position:relative}
+.who .nm{font-size:19px;font-weight:600;line-height:1.3}
+.who .meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:6px;font-size:13px;opacity:.85}
+.sapchip{border:1px solid rgba(255,255,255,.35);border-radius:6px;padding:1px 8px;font-variant-numeric:tabular-nums;letter-spacing:.5px}
+.acts{display:flex;gap:4px;position:relative}
+.icon-btn{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;color:#fff}
+.icon-btn:active{background:rgba(255,255,255,.12)}
+.icon-btn svg{width:21px;height:21px}
+
+/* ---------- tally ---------- */
+.board{background:var(--paper);margin:14px 14px 0;border-radius:16px;padding:18px 16px 14px;border:1px solid var(--line)}
+.rate-row{display:flex;align-items:baseline;gap:10px}
+.rate-num{font-size:44px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.rate-lbl{font-size:14px;color:var(--ink2)}
+.bar{display:flex;height:10px;border-radius:5px;overflow:hidden;background:var(--steel);margin:14px 0 12px}
+.bar i{display:block;height:100%}
+.tally{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.tally button{border-radius:10px;padding:8px 4px;text-align:center;border:1.5px solid transparent}
+.tally button b{display:block;font-size:20px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.2}
+.tally button span{font-size:11.5px;color:var(--ink2);white-space:nowrap}
+.tally button[aria-pressed="true"]{border-color:var(--ink);background:var(--steel)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-inline-end:4px;vertical-align:middle}
+
+.panel{background:var(--paper);margin:12px 14px 0;border-radius:16px;padding:14px 12px 10px;border:1px solid var(--line)}
+.panel h2{font-size:15px;font-weight:600;padding:0 4px 6px}
+#trend svg{width:100%;height:auto;display:block}
+.legend{display:flex;gap:14px;justify-content:center;font-size:12px;color:var(--ink2);padding-top:4px}
+
+/* ---------- list ---------- */
+.tools{margin:16px 14px 8px}
+.search{width:100%;background:var(--paper);border:1.5px solid var(--line);border-radius:12px;padding:11px 14px}
+.list{display:grid;gap:10px;margin:0 14px}
+.tag{position:relative;background:var(--paper);border:1px solid var(--line);border-radius:6px 16px 16px 16px;padding:14px 16px 14px 16px;padding-inline-start:30px;text-align:start;width:100%;overflow:hidden}
+.tag::before{content:"";position:absolute;inset-inline-start:11px;top:17px;width:9px;height:9px;border-radius:50%;background:var(--steel);box-shadow:inset 0 1px 2px rgba(20,40,60,.35)}
+.tag-head{display:flex;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--ink2);padding-inline-end:84px}
+.tag-head .area{color:var(--ink);font-weight:500}
+.tag .idea{font-size:15px;margin-top:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;padding-inline-end:12px}
+.tag-foot{display:flex;gap:10px;align-items:center;margin-top:8px;font-size:12px;color:var(--ink2)}
+.tag-foot svg{width:15px;height:15px;vertical-align:-3px}
+.stamp{position:absolute;inset-inline-end:12px;top:12px;transform:rotate(-8deg);border:2px solid currentColor;border-radius:6px;padding:1px 8px;font-size:12.5px;font-weight:700;background:var(--paper);box-shadow:0 0 0 2px var(--paper),0 0 0 3px currentColor;white-space:nowrap}
+.st-ok{color:var(--ok)} .st-no{color:var(--no)} .st-wait{color:var(--wait)} .st-study{color:var(--study)} .st-mgmt{color:var(--mgmt)}
+.empty{text-align:center;color:var(--ink2);padding:40px 20px}
+.more{display:block;margin:14px auto 0;color:var(--ink);font-weight:600;padding:10px 18px;border:1.5px solid var(--line);border-radius:10px;background:var(--paper)}
+
+/* ---------- review ---------- */
+.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:4px;margin:14px 14px 12px}
+.seg button{padding:10px 6px;border-radius:9px;font-weight:500;font-size:14px}
+.seg button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.seg b{font-variant-numeric:tabular-nums}
+.who-line{font-size:13px;color:var(--ink);font-weight:500}
+
+/* ---------- fab + nav ---------- */
+.fab{position:fixed;bottom:calc(18px + env(safe-area-inset-bottom));inset-inline-end:max(16px,calc(50% - 264px));z-index:20;box-shadow:0 6px 18px rgba(20,40,60,.28);border-radius:30px;padding:14px 22px}
+.fab svg{width:20px;height:20px}
+body.has-nav .fab{bottom:calc(84px + env(safe-area-inset-bottom))}
+body.has-nav .wrap{padding-bottom:calc(160px + env(safe-area-inset-bottom))}
+.nav{position:fixed;bottom:0;left:0;right:0;z-index:19;background:var(--paper);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+.nav-in{max-width:560px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr}
+.nav button{padding:12px 6px 10px;font-size:13px;color:var(--ink2);display:flex;flex-direction:column;align-items:center;gap:3px;position:relative}
+.nav button svg{width:22px;height:22px}
+.nav button[aria-pressed="true"]{color:var(--ink);font-weight:600}
+.nav button[aria-pressed="true"]::after{content:"";position:absolute;top:0;left:30%;right:30%;height:3px;background:var(--safety);border-radius:0 0 3px 3px}
+.badge{position:absolute;top:6px;inset-inline-start:calc(50% + 6px);background:var(--no);color:#fff;font-size:11px;border-radius:10px;padding:0 6px;font-weight:600;font-variant-numeric:tabular-nums}
+
+/* ---------- sheet ---------- */
+.sheet{position:fixed;inset:0;z-index:40;display:flex;align-items:flex-end;justify-content:center}
+.sheet-bg{position:absolute;inset:0;background:rgba(14,26,38,.5)}
+.sheet-card{position:relative;background:var(--paper);width:100%;max-width:560px;max-height:92vh;overflow:auto;border-radius:20px 20px 0 0;padding:10px 18px calc(24px + env(safe-area-inset-bottom));animation:up .22s ease-out}
+@keyframes up{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.sheet-card{animation:none}}
+.grab{width:42px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 10px}
+.x{position:absolute;inset-inline-end:10px;top:8px;width:40px;height:40px;font-size:26px;color:var(--ink2);line-height:1}
+.sheet h3{font-size:19px;font-weight:600;padding-inline-end:40px;margin-bottom:4px}
+.sub{font-size:13px;color:var(--ink2)}
+.dl{display:grid;gap:12px;margin-top:16px}
+.dl div{border-bottom:1px solid var(--steel);padding-bottom:10px}
+.dl dt{font-size:12.5px;color:var(--ink2)}
+.dl dd{font-size:15px;white-space:pre-wrap}
+.status-big{display:inline-block;margin-top:10px;font-weight:700;border:2px solid currentColor;border-radius:8px;padding:3px 12px;transform:rotate(-3deg)}
+.photos{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.ph{background:var(--steel);border-radius:12px;aspect-ratio:4/3;overflow:hidden;display:grid;place-items:center;color:var(--ink2);font-size:13px;position:relative}
+.ph img{width:100%;height:100%;object-fit:cover;display:block}
+.ph span.cap{position:absolute;bottom:6px;inset-inline-start:6px;background:rgba(20,40,60,.75);color:#fff;font-size:11.5px;border-radius:6px;padding:1px 7px}
+
+.form{display:grid;gap:18px;margin-top:14px}
+.form .q{font-size:14px;font-weight:600;margin-bottom:8px}
+.form .q small{font-weight:400;color:var(--ink2)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1.5px solid var(--line);background:var(--paper);border-radius:20px;padding:7px 14px;font-size:14px}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.chip.d-ok[aria-pressed="true"]{background:var(--ok);border-color:var(--ok)}
+.chip.d-no[aria-pressed="true"]{background:var(--no);border-color:var(--no)}
+.chip.d-study[aria-pressed="true"]{background:var(--study);border-color:var(--study)}
+.chip.d-mgmt[aria-pressed="true"]{background:var(--mgmt);border-color:var(--mgmt)}
+textarea.input{min-height:92px;resize:vertical;font-size:15px}
+select.input{font-size:15px}
+.pick{display:flex;align-items:center;gap:12px}
+.pick label.btn{background:var(--steel);color:var(--ink);font-size:14px;padding:10px 14px}
+.pick img{width:64px;height:64px;object-fit:cover;border-radius:10px}
+.pick .rm{color:var(--no);font-size:13px}
+.form .btn{width:100%}
+
+/* ---------- loader / toast ---------- */
+.loader{position:fixed;inset:0;z-index:60;display:grid;place-items:center;background:rgba(231,235,239,.75)}
+.ring{width:44px;height:44px;border-radius:50%;border:4px solid var(--line);border-top-color:var(--ink);animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.toast{position:fixed;left:50%;bottom:calc(100px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:#fff;border-radius:12px;padding:11px 18px;z-index:70;font-size:14px;max-width:90vw;box-shadow:0 6px 18px rgba(20,40,60,.3)}
+.toast.bad{background:var(--no)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ===== Login ===== -->
+  <section id="login">
+    <div class="login-top">
+      <div class="kanji" aria-hidden="true">改善</div>
+      <h1>الاقتراحات والكايزن<span>ادخل برقم الساب</span></h1>
+    </div>
+    <div class="stripe"></div>
+    <form class="login-form" id="loginForm" autocomplete="on">
+      <div class="field"><label for="sap">رقم الساب</label><input class="input" id="sap" name="username" inputmode="numeric" autocomplete="username" required></div>
+      <div class="field"><label for="pass">الباسورد</label><input class="input" id="pass" name="password" type="password" autocomplete="current-password" required></div>
+      <label class="remember"><input type="checkbox" id="remember" checked> افتكرني على الموبايل ده</label>
+      <div class="err" id="loginErr" role="alert"></div>
+      <button class="btn" type="submit" id="loginBtn">دخول</button>
+    </form>
+  </section>
+
+  <!-- ===== App ===== -->
+  <section id="app" hidden>
+    <header class="top">
+      <div class="kanji" aria-hidden="true">改善</div>
+      <div class="who">
+        <div class="nm" id="uName"></div>
+        <div class="meta"><span id="uSec"></span><span class="sapchip" id="uSap"></span></div>
+      </div>
+      <div class="acts">
+        <button class="icon-btn" id="btnRefresh" aria-label="تحديث"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 4v5h-5"/></svg></button>
+        <button class="icon-btn" id="btnOut" aria-label="خروج"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 17l-5-5 5-5"/><path d="M5 12h11"/></svg></button>
+      </div>
+    </header>
+    <div class="stripe"></div>
+
+    <!-- my suggestions -->
+    <main id="vMine">
+      <section class="board">
+        <div class="rate-row"><div class="rate-num" id="rate">0%</div><div class="rate-lbl">نسبة القبول</div></div>
+        <div class="bar" id="bar"></div>
+        <div class="tally" id="tally"></div>
+      </section>
+      <section class="panel"><h2>شهرياً</h2><div id="trend"></div>
+        <div class="legend"><span><i class="dot" style="background:var(--ok)"></i>مقبول</span><span><i class="dot" style="background:var(--no)"></i>مرفوض</span><span><i class="dot" style="background:var(--wait)"></i>تحت المراجعة</span></div>
+      </section>
+      <div class="tools"><input class="search" id="q" type="search" placeholder="دور في اقتراحاتك"></div>
+      <div class="list" id="list"></div>
+      <button class="more" id="more" hidden>عرض المزيد</button>
+    </main>
+
+    <!-- supervisor review -->
+    <main id="vReview" hidden>
+      <div class="seg" id="seg">
+        <button data-q="decide" aria-pressed="true">محتاج قرار <b id="cDecide">0</b></button>
+        <button data-q="photo" aria-pressed="false">محتاج صورة بعد <b id="cPhoto">0</b></button>
+      </div>
+      <div class="list" id="rList"></div>
+      <button class="more" id="rMore" hidden>عرض المزيد</button>
+    </main>
+  </section>
+</div>
+
+<button class="btn safety fab" id="fab" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>اقتراح جديد</button>
+
+<nav class="nav" id="nav" hidden>
+  <div class="nav-in">
+    <button data-v="mine" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg>اقتراحاتي</button>
+    <button data-v="review" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>مراجعة<span class="badge" id="navBadge" hidden></span></button>
+  </div>
+</nav>
+
+<div class="sheet" id="sheet" hidden>
+  <div class="sheet-bg" data-close></div>
+  <div class="sheet-card" role="dialog" aria-modal="true">
+    <div class="grab"></div>
+    <button class="x" data-close aria-label="إغلاق">×</button>
+    <div id="sheetBody"></div>
+  </div>
+</div>
+
+<div class="loader" id="loader" hidden><div class="ring"></div></div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+/* ======== حط هنا لينك الـ Web App بتاع Apps Script ======== */
+const API = 'https://script.google.com/macros/s/AKfycbz9gYaluEdBvCmvqDiJMJllzUVd8fErOK81buSEtHtsnInxOirc4ulFG4MXxuVRQ1SZzg/exec';
+
+const BENEFITS = ['الانتاجية','الجوده','التكلفة','النقل و التداول','السلامة والصحة المهنيه','رفع الروح المعنوية'];
+const KINDS = ['فكره سريعة التنفيذ','فكره تحتاج لدراسة تفصيلية','مشروع لاكثر من 3 شهور'];
+const TYPES = ['اقتراح عادي','اقتراح موجه'];
+const MONTHS = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+const PAGE = 40;
+
+let S = { sap:'', pass:'' };     // بيانات الدخول
+let D = null;                     // البيانات اللي جاية من السيرفر
+let view = 'mine', filter = 'all', shown = PAGE, rq = 'decide', rShown = PAGE;
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uniq = a => [...new Set(a.filter(Boolean))];
+
+/* ---------- API ---------- */
+async function api(action, extra = {}) {
+  if (API.startsWith('PUT_')) throw new Error('لسه ما اتحطش لينك الـ Web App في الصفحة.');
+  let res;
+  try {
+    res = await fetch(API, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({ action, sap:S.sap, pass:S.pass, ...extra }) });
+  } catch (e) { throw new Error('مفيش اتصال بالنت. جرب تاني.'); }
+  const j = await res.json();
+  if (!j.ok) { const er = new Error(j.error || 'حصلت مشكلة.'); er.auth = j.auth === false; throw er; }
+  return j;
+}
+function busy(on){ $('loader').hidden = !on; }
+let toastT;
+function toast(msg, bad){ const t=$('toast'); t.textContent=msg; t.className='toast'+(bad?' bad':''); t.hidden=false; clearTimeout(toastT); toastT=setTimeout(()=>t.hidden=true, 3200); }
+
+/* ---------- status ---------- */
+function st(dec){
+  switch((dec||'').trim()){
+    case 'مقبول': return {k:'ok', l:'مقبول', g:'ok'};
+    case 'مرفوض': return {k:'no', l:'مرفوض', g:'no'};
+    case 'جاري الدراسة': return {k:'study', l:'جاري الدراسة', g:'wait'};
+    case 'يحول الى الادارة': return {k:'mgmt', l:'عند الإدارة', g:'wait'};
+    default: return {k:'wait', l:'تحت المراجعة', g:'wait'};
+  }
+}
+function pDate(s){ if(!s) return null; const m=String(s).match(/^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}))?/); return m? new Date(+m[1],+m[2]-1,+m[3],+(m[4]||0),+(m[5]||0)) : null; }
+function fDate(s){ const d=pDate(s); return d? d.toLocaleDateString('ar-EG',{day:'numeric',month:'long',year:'numeric'}) : (s||''); }
+
+/* ---------- login ---------- */
+$('loginForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  S = { sap: $('sap').value.trim(), pass: $('pass').value.trim() };
+  $('loginErr').textContent = ''; $('loginBtn').disabled = true;
+  try {
+    await loadData();
+    if ($('remember').checked) localStorage.setItem('kz', JSON.stringify(S)); else localStorage.removeItem('kz');
+  } catch (err) { $('loginErr').textContent = err.message; }
+  $('loginBtn').disabled = false;
+});
+
+async function loadData(){
+  busy(true);
+  try {
+    D = await api('load');
+    $('login').hidden = true; $('app').hidden = false; $('fab').hidden = false;
+    $('uName').textContent = D.user.name;
+    $('uSec').textContent = D.user.section;
+    $('uSap').textContent = D.user.sap;
+    $('nav').hidden = !D.isSup; document.body.classList.toggle('has-nav', D.isSup);
+    renderAll();
+  } finally { busy(false); }
+}
+
+$('btnOut').onclick = () => { localStorage.removeItem('kz'); S={sap:'',pass:''}; D=null; location.reload(); };
+$('btnRefresh').onclick = async () => { try { await loadData(); toast('اتحدثت البيانات'); } catch(e){ toast(e.message,true); } };
+
+/* ---------- views ---------- */
+$('nav').onclick = e => { const b=e.target.closest('button'); if(!b) return; setView(b.dataset.v); };
+function setView(v){
+  view = v;
+  $('vMine').hidden = v!=='mine'; $('vReview').hidden = v!=='review';
+  $('fab').hidden = v!=='mine';
+  document.querySelectorAll('#nav button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.v===v));
+  window.scrollTo(0,0);
+}
+function renderAll(){ renderBoard(); renderTrend(); renderList(); if(D.isSup) renderReview(); }
+
+/* ---------- board ---------- */
+function counts(){
+  const c={all:D.mine.length, ok:0, no:0, wait:0};
+  D.mine.forEach(x=>c[st(x.dec).g]++);
+  return c;
+}
+function renderBoard(){
+  const c = counts(), decided = c.ok + c.no;
+  $('rate').textContent = (decided ? Math.round(c.ok/decided*100) : 0) + '%';
+  const w = n => c.all ? (n/c.all*100) : 0;
+  $('bar').innerHTML = `<i style="width:${w(c.ok)}%;background:var(--ok)"></i><i style="width:${w(c.no)}%;background:var(--no)"></i><i style="width:${w(c.wait)}%;background:var(--wait)"></i>`;
+  const cells = [['all','الكل',''],['ok','مقبول','var(--ok)'],['no','مرفوض','var(--no)'],['wait','تحت المراجعة','var(--wait)']];
+  $('tally').innerHTML = cells.map(([k,l,col])=>`<button data-f="${k}" aria-pressed="${filter===k}"><b>${c[k].toLocaleString('ar-EG')}</b><span>${col?`<i class="dot" style="background:${col}"></i>`:''}${l}</span></button>`).join('');
+}
+$('tally').onclick = e => { const b=e.target.closest('button'); if(!b) return; filter = (filter===b.dataset.f && b.dataset.f!=='all') ? 'all' : b.dataset.f; shown=PAGE; renderBoard(); renderList(); };
+
+/* ---------- trend ---------- */
+function renderTrend(){
+  const now = new Date(), months = [];
+  for(let i=11;i>=0;i--){ const d=new Date(now.getFullYear(), now.getMonth()-i, 1); months.push({key:`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`, m:d.getMonth(), ok:0,no:0,wait:0}); }
+  const idx = Object.fromEntries(months.map((m,i)=>[m.key,i]));
+  D.mine.forEach(x=>{ const k=String(x.dt).slice(0,7); if(k in idx) months[idx[k]][st(x.dec).g]++; });
+  const max = Math.max(1, ...months.map(m=>m.ok+m.no+m.wait));
+  const W=340, Hh=150, top=18, base=118, bw=17, gap=(W-12*bw)/12;
+  let s = `<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="عدد الاقتراحات في آخر 12 شهر">`;
+  s += `<line x1="0" x2="${W}" y1="${base+.5}" y2="${base+.5}" stroke="var(--line)"/>`;
+  months.forEach((m,i)=>{
+    const x = W - (i+1)*(bw+gap) + gap/2;   // من اليمين للشمال
+    let y = base; const tot = m.ok+m.no+m.wait;
+    [['ok','var(--ok)'],['no','var(--no)'],['wait','var(--wait)']].forEach(([k,col])=>{
+      const h = m[k]/max*(base-top); if(!h) return; y -= h;
+      s += `<rect x="${x}" y="${y}" width="${bw}" height="${h}" fill="${col}"/>`;
+    });
+    if(tot) s += `<text x="${x+bw/2}" y="${y-5}" text-anchor="middle" font-size="10" font-weight="600" fill="var(--ink)">${tot}</text>`;
+    const isNow = i===11;
+    s += `<text x="${x+bw/2}" y="${base+16}" text-anchor="middle" font-size="9" fill="${isNow?'var(--ink)':'var(--ink2)'}" font-weight="${isNow?600:400}">${MONTHS[m.m].slice(0,3)}</text>`;
+    if(m.m===0 || i===0) s += `<text x="${x+bw/2}" y="${base+29}" text-anchor="middle" font-size="8.5" fill="var(--ink2)">${m.key.slice(0,4)}</text>`;
+  });
+  $('trend').innerHTML = s + '</svg>';
+}
+
+/* ---------- list ---------- */
+const camIco = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>';
+function card(x, extra=''){
+  const s = st(x.dec);
+  return `<button class="tag" data-id="${esc(x.id)}">
+    <div class="tag-head"><span>${esc(fDate(x.dt))}</span><span class="area">${esc(x.area)}</span></div>
+    ${extra}
+    <p class="idea">${esc(x.idea || x.problem)}</p>
+    <div class="tag-foot"><span>${esc(x.type)}</span>${(x.before||x.after)?`<span>${camIco}</span>`:''}${x.kind?`<span>${esc(x.kind)}</span>`:''}</div>
+    <span class="stamp st-${s.k}">${s.l}</span>
+  </button>`;
+}
+function filtered(){
+  const q = $('q').value.trim();
+  return D.mine.filter(x => (filter==='all' || st(x.dec).g===filter) && (!q || (x.idea+' '+x.problem+' '+x.area).includes(q)));
+}
+function renderList(){
+  const items = filtered();
+  $('list').innerHTML = items.length ? items.slice(0,shown).map(x=>card(x)).join('')
+    : `<div class="empty">${D.mine.length ? 'مفيش اقتراحات بالشكل ده.' : 'لسه ما سجلتش أي اقتراح. ابدأ بأول فكرة من زرار "اقتراح جديد".'}</div>`;
+  $('more').hidden = items.length <= shown;
+}
+$('more').onclick = () => { shown += PAGE; renderList(); };
+let qT; $('q').oninput = () => { clearTimeout(qT); qT=setTimeout(()=>{ shown=PAGE; renderList(); }, 200); };
+$('list').onclick = e => { const b=e.target.closest('.tag'); if(b) openDetail(D.mine.find(x=>x.id===b.dataset.id)); };
+
+/* ---------- sheet ---------- */
+function openSheet(html){ $('sheetBody').innerHTML = html; $('sheet').hidden = false; document.body.style.overflow='hidden'; }
+function closeSheet(){ $('sheet').hidden = true; document.body.style.overflow=''; }
+$('sheet').addEventListener('click', e => { if(e.target.closest('[data-close]')) closeSheet(); });
+document.addEventListener('keydown', e => { if(e.key==='Escape' && !$('sheet').hidden) closeSheet(); });
+
+function dl(rows){ return `<dl class="dl">${rows.filter(r=>r[1]).map(([k,v])=>`<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>`; }
+function photosBlock(x){
+  const ps = [['صورة قبل',x.before],['صورة بعد',x.after]].filter(p=>p[1]);
+  if(!ps.length) return '';
+  return `<div class="photos">${ps.map(([l,p])=>`<div class="ph" data-path="${esc(p)}">جاري التحميل…<span class="cap">${l}</span></div>`).join('')}</div>`;
+}
+async function loadPhotos(x){
+  const paths = [x.before, x.after].filter(Boolean);
+  if(!paths.length) return;
+  try {
+    const j = await api('img', { paths });
+    document.querySelectorAll('#sheetBody .ph').forEach(el=>{
+      const id = j.ids[el.dataset.path], cap = el.querySelector('.cap').outerHTML;
+      el.innerHTML = id ? `<a href="https://drive.google.com/file/d/${id}/view" target="_blank" rel="noopener" style="display:contents"><img alt="" src="https://drive.google.com/thumbnail?id=${id}&sz=w1000" onerror="this.closest('.ph').insertAdjacentText('afterbegin','الصورة مش متاحة');this.parentNode.remove()"></a>${cap}` : `الصورة مش متاحة${cap}`;
+    });
+  } catch(e){ document.querySelectorAll('#sheetBody .ph').forEach(el=>el.firstChild.textContent='الصورة مش متاحة'); }
+}
+function detailRows(x){
+  return [
+    ['المنطقة', [x.activity, x.ideaSec, x.area].filter(Boolean).join(' / ')],
+    ['نوع الاقتراح', x.type], ['تصنيف الاقتراح الموجه', x.dirCat], ['الفاقد', x.loss], ['الأسباب', x.cause],
+    ['المشكلة', x.problem], ['الفكرة', x.idea], ['نوع الفكرة', x.kind], ['جوانب الفائدة', x.benefits],
+    ['المشرف', x.sup], ['تاريخ القرار', x.decAt ? fDate(x.decAt) : ''], ['التاريخ المستهدف', x.target ? fDate(x.target) : ''],
+    ['قرار الإدارة', x.mgmt]
+  ];
+}
+function openDetail(x){
+  if(!x) return;
+  const s = st(x.dec);
+  openSheet(`<h3>${esc(x.idea || x.problem).slice(0,80)}</h3><div class="sub">${esc(fDate(x.dt))}</div>
+    <span class="status-big st-${s.k}">${s.l}</span>${photosBlock(x)}${dl(detailRows(x))}`);
+  loadPhotos(x);
+}
+
+/* ---------- photo helper ---------- */
+function compress(file, max=1280, q=0.78){
+  return new Promise((res,rej)=>{
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = () => { const k=Math.min(1, max/Math.max(img.width,img.height)); const c=document.createElement('canvas');
+      c.width=Math.round(img.width*k); c.height=Math.round(img.height*k); c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      URL.revokeObjectURL(url); res(c.toDataURL('image/jpeg', q)); };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('الصورة دي مش مدعومة.')); };
+    img.src = url;
+  });
+}
+function pickerHTML(id, label){ return `<div class="pick" id="${id}"><label class="btn">${camIco.replace('<svg','<svg width="18" height="18"')} ${label}<input type="file" accept="image/*" capture="environment" hidden></label><span class="prev"></span></div>`; }
+function bindPicker(id, onSet){
+  const el = $(id);
+  el.querySelector('input').onchange = async e => {
+    const f = e.target.files[0]; if(!f) return;
+    try { const data = await compress(f); onSet(data);
+      el.querySelector('.prev').innerHTML = `<img src="${data}" alt=""> <button type="button" class="rm">شيل الصورة</button>`;
+      el.querySelector('.rm').onclick = () => { onSet(null); el.querySelector('.prev').innerHTML=''; e.target.value=''; };
+    } catch(err){ toast(err.message,true); }
+  };
+}
+function chipsHTML(opts, sel, multi, cls=()=> ''){
+  return opts.map(o=>{ const v=typeof o==='object'?o.v:o, l=typeof o==='object'?o.l:o; const on = multi ? sel.includes(v) : sel===v;
+    return `<button type="button" class="chip ${cls(v)}" aria-pressed="${on}" data-v="${esc(v)}">${esc(l)}</button>`; }).join('');
+}
+function onChip(el, fn){ el.onclick = e => { const b=e.target.closest('.chip'); if(b) fn(b.dataset.v); }; }
+
+/* ---------- new suggestion ---------- */
+let F;
+$('fab').onclick = openForm;
+function openForm(){
+  const sq = s => String(s||'').replace(/\s+/g,'');
+  const home = D.areas.find(a => sq(a.subArea)===sq(D.user.section));
+  F = { activity: home?.activity||'', ideaSec: home?.ideaSec||'', code: home?.code||'', type:'اقتراح عادي', dirCat:[], loss:'', cause:'', kind:'', benefits:[], beforeImg:null };
+  openSheet(`<h3>اقتراح جديد</h3>
+    <form class="form" id="nf" novalidate>
+      <div><div class="q">النشاط</div><div class="chips" id="fAct"></div></div>
+      <div id="wSec"><div class="q">قسم الفكرة</div><div class="chips" id="fSec"></div></div>
+      <div id="wSub"><div class="q">المنطقة</div><div class="chips" id="fSub"></div></div>
+      <div><div class="q">نوع الاقتراح</div><div class="chips" id="fType"></div></div>
+      <div id="wDir" hidden>
+        <div class="q">تصنيف الاقتراح الموجه</div><div class="chips" id="fDir"></div>
+        <div id="wLoss" hidden style="margin-top:14px"><div class="q">الفاقد</div><div class="chips" id="fLoss"></div></div>
+        <div id="wCause" hidden style="margin-top:14px"><div class="q">الأسباب</div><select class="input" id="fCause"></select></div>
+      </div>
+      <div><label class="q" for="fProb">المشكلة</label><textarea class="input" id="fProb" style="margin-top:8px"></textarea></div>
+      <div><label class="q" for="fIdea">ملخص الفكرة</label><textarea class="input" id="fIdea" style="margin-top:8px"></textarea></div>
+      <div><div class="q">نوع الفكرة <small>(اختياري)</small></div><div class="chips" id="fKind"></div></div>
+      <div><div class="q">جوانب الفائدة <small>(اختار واحد أو أكتر)</small></div><div class="chips" id="fBen"></div></div>
+      <div><div class="q">صورة قبل <small>(اختياري)</small></div>${pickerHTML('fPic','صوّر المشكلة')}</div>
+      <div class="err" id="fErr" role="alert"></div>
+      <button class="btn" type="submit">ابعت الاقتراح</button>
+    </form>`);
+  renderForm();
+  onChip($('fAct'), v=>{ F.activity=v; F.ideaSec=''; F.code=''; renderForm(); });
+  onChip($('fSec'), v=>{ F.ideaSec=v; F.code=''; renderForm(); });
+  onChip($('fSub'), v=>{ F.code=v; renderForm(); });
+  onChip($('fType'), v=>{ F.type=v; renderForm(); });
+  onChip($('fDir'), v=>{ F.dirCat = F.dirCat.includes(v) ? F.dirCat.filter(x=>x!==v) : [...F.dirCat, v]; F.loss=''; F.cause=''; renderForm(); });
+  onChip($('fLoss'), v=>{ F.loss = F.loss===v ? '' : v; F.cause=''; renderForm(); });
+  onChip($('fKind'), v=>{ F.kind = F.kind===v ? '' : v; renderForm(); });
+  onChip($('fBen'), v=>{ F.benefits = F.benefits.includes(v) ? F.benefits.filter(x=>x!==v) : [...F.benefits, v]; renderForm(); });
+  $('fCause').onchange = e => F.cause = e.target.value;
+  bindPicker('fPic', d => F.beforeImg = d);
+  $('nf').onsubmit = submitForm;
+}
+function renderForm(){
+  const A = D.areas;
+  $('fAct').innerHTML = chipsHTML(uniq(A.map(a=>a.activity)), F.activity);
+  const secs = uniq(A.filter(a=>a.activity===F.activity).map(a=>a.ideaSec));
+  $('wSec').hidden = !F.activity; $('fSec').innerHTML = chipsHTML(secs, F.ideaSec);
+  const subs = A.filter(a=>a.activity===F.activity && a.ideaSec===F.ideaSec).map(a=>({v:a.code, l:a.subArea}));
+  $('wSub').hidden = !F.ideaSec; $('fSub').innerHTML = chipsHTML(subs, F.code);
+  $('fType').innerHTML = chipsHTML(TYPES, F.type);
+  const dir = F.type==='اقتراح موجه'; $('wDir').hidden = !dir;
+  if(dir){
+    $('fDir').innerHTML = chipsHTML(uniq(D.directed.map(d=>d.cat)), F.dirCat, true);
+    const losses = uniq(D.directed.filter(d=>F.dirCat.includes(d.cat)).map(d=>d.loss));
+    $('wLoss').hidden = !losses.length; $('fLoss').innerHTML = chipsHTML(losses, F.loss);
+    const causes = uniq(D.directed.filter(d=>F.dirCat.includes(d.cat) && d.loss===F.loss).map(d=>d.cause));
+    $('wCause').hidden = !(F.loss && causes.length);
+    $('fCause').innerHTML = '<option value="">اختار السبب</option>' + causes.map(c=>`<option ${c===F.cause?'selected':''}>${esc(c)}</option>`).join('');
+  }
+  $('fKind').innerHTML = chipsHTML(KINDS, F.kind);
+  $('fBen').innerHTML = chipsHTML(BENEFITS, F.benefits, true);
+}
+async function submitForm(e){
+  e.preventDefault();
+  const problem = $('fProb').value.trim(), idea = $('fIdea').value.trim();
+  const miss = !F.code ? 'اختار المنطقة.' : !problem ? 'اكتب المشكلة.' : !idea ? 'اكتب ملخص الفكرة.' : (F.type==='اقتراح موجه' && !F.dirCat.length) ? 'اختار تصنيف الاقتراح الموجه.' : '';
+  if(miss){ $('fErr').textContent = miss; return; }
+  busy(true);
+  try {
+    const j = await api('submit', { data: { ...F, dirCat: F.type==='اقتراح موجه'?F.dirCat:[], loss: F.type==='اقتراح موجه'?F.loss:'', cause: F.type==='اقتراح موجه'?F.cause:'', problem, idea } });
+    D.mine.unshift(j.item); filter='all'; shown=PAGE; closeSheet(); renderBoard(); renderTrend(); renderList();
+    toast('اتبعت الاقتراح لمشرفك');
+  } catch(err){ $('fErr').textContent = err.message; }
+  busy(false);
+}
+
+/* ---------- supervisor review ---------- */
+$('seg').onclick = e => { const b=e.target.closest('button'); if(!b) return; rq=b.dataset.q; rShown=PAGE; renderReview(); };
+function renderReview(){
+  const dec = D.review.filter(x=>x.q==='decide'), ph = D.review.filter(x=>x.q==='photo');
+  $('cDecide').textContent = dec.length.toLocaleString('ar-EG'); $('cPhoto').textContent = ph.length.toLocaleString('ar-EG');
+  $('navBadge').hidden = !dec.length; $('navBadge').textContent = dec.length > 99 ? '99+' : dec.length;
+  document.querySelectorAll('#seg button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.q===rq));
+  const items = rq==='decide' ? dec : ph;
+  $('rList').innerHTML = items.length ? items.slice(0,rShown).map(x=>card(x, `<div class="who-line">${esc(x.name)} <span class="sub">${esc(x.sap)}</span></div>`)).join('')
+    : `<div class="empty">${rq==='decide' ? 'مفيش اقتراحات مستنية قرارك.' : 'كل الاقتراحات المقبولة ليها صورة بعد.'}</div>`;
+  $('rMore').hidden = items.length <= rShown;
+}
+$('rMore').onclick = () => { rShown += PAGE; renderReview(); };
+$('rList').onclick = e => { const b=e.target.closest('.tag'); if(b) openReview(D.review.find(x=>x.id===b.dataset.id)); };
+
+let R;
+function openReview(x){
+  if(!x) return;
+  R = { id:x.id, dec: x.dec==='جاري الدراسة' || x.dec==='مقبول' ? x.dec : '', kind:x.kind||'', target:'', afterImg:null };
+  const dcls = v => ({'مقبول':'d-ok','مرفوض':'d-no','جاري الدراسة':'d-study','يحول الى الادارة':'d-mgmt'}[v]||'');
+  openSheet(`<h3>${esc(x.name)}</h3><div class="sub"><span class="sapchip" style="border-color:var(--line)">${esc(x.sap)}</span>&nbsp; ${esc(fDate(x.dt))}</div>
+    ${photosBlock(x)}${dl(detailRows(x).slice(0,9))}
+    <form class="form" id="rf" novalidate>
+      <div><div class="q">القرار</div><div class="chips" id="rDec"></div></div>
+      <div><div class="q">نوع الفكرة</div><div class="chips" id="rKind"></div></div>
+      <div><label class="q" for="rTarget">التاريخ المستهدف <small>(اختياري)</small></label><input class="input" type="date" id="rTarget" style="margin-top:8px"></div>
+      <div id="wAfter"><div class="q">صورة بعد التنفيذ</div>${pickerHTML('rPic','صوّر بعد التنفيذ')}</div>
+      <div class="err" id="rErr" role="alert"></div>
+      <button class="btn" type="submit">احفظ القرار</button>
+    </form>`);
+  const draw = () => { $('rDec').innerHTML = chipsHTML(D.decisions, R.dec, false, dcls); $('rKind').innerHTML = chipsHTML(KINDS, R.kind); $('wAfter').hidden = R.dec!=='مقبول'; };
+  draw();
+  onChip($('rDec'), v=>{ R.dec=v; draw(); });
+  onChip($('rKind'), v=>{ R.kind = R.kind===v ? '' : v; draw(); });
+  $('rTarget').onchange = e => R.target = e.target.value;
+  bindPicker('rPic', d => R.afterImg = d);
+  $('rf').onsubmit = async e => {
+    e.preventDefault();
+    if(!R.dec){ $('rErr').textContent='اختار القرار.'; return; }
+    busy(true);
+    try {
+      const j = await api('review', { data: R });
+      const it = j.item, i = D.review.findIndex(y=>y.id===it.id);
+      if(i>-1){
+        if(it.dec==='جاري الدراسة') D.review[i] = {...it, q:'decide'};
+        else if(it.dec==='مقبول' && !it.after) D.review[i] = {...it, q:'photo'};
+        else D.review.splice(i,1);
+      }
+      const mi = D.mine.findIndex(y=>y.id===it.id); if(mi>-1){ D.mine[mi]=it; renderBoard(); renderTrend(); renderList(); }
+      closeSheet(); renderReview(); toast('اتحفظ القرار');
+    } catch(err){ $('rErr').textContent = err.message; }
+    busy(false);
+  };
+  loadPhotos(x);
+}
+
+/* ---------- start ---------- */
+(async () => {
+  const saved = localStorage.getItem('kz');
+  if(!saved) return;
+  try { S = JSON.parse(saved); $('sap').value = S.sap; await loadData(); }
+  catch(e){ if(e.auth) localStorage.removeItem('kz'); $('loginErr').textContent = e.message; }
+})();
+</script>
+</body>
+</html>
