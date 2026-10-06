@@ -371,15 +371,20 @@ const store = {
 };
 
 /* ================= API ================= */
-async function api(action, extra = {}) {
-  let res, txt;
+const OLD_CODE = 'الكود اللي على جوجل لسه القديم. حدّث الـ Deploy: Manage deployments ← القلم ← New version.';
+async function api(action, extra = {}, timeout = 40000) {
+  let txt;
+  const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), timeout);
   try {
-    res = await fetch(API, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({action, sap:S.sap, pass:S.pass, ...extra})});
+    const res = await fetch(API, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({action, sap:S.sap, pass:S.pass, ...extra}), signal: ctl.signal});
     txt = await res.text();
-  } catch (e) { const er = new Error('مفيش اتصال بالنت.'); er.net = true; throw er; }
+  } catch (e) {
+    const er = new Error(e.name === 'AbortError' ? 'السيرفر بطيء دلوقتي، جرب تاني.' : 'مفيش اتصال بالنت.'); er.net = true; throw er;
+  } finally { clearTimeout(tm); }
   if (/^\s*</.test(txt)) throw new Error('السيرفر رجّع صفحة بدل البيانات. اتأكد إن الـ Deploy على Anyone وإنه آخر نسخة.');
   let j; try { j = JSON.parse(txt); } catch (e) { throw new Error('السيرفر مردش صح، جرب تاني.'); }
-  if (!j.ok) { const er = new Error(j.error || 'حصلت مشكلة.'); er.auth = j.auth === false; throw er; }
+  if (!j.ok) { const er = new Error(j.error === 'طلب غير معروف.' ? OLD_CODE : (j.error || 'حصلت مشكلة.')); er.auth = j.auth === false; throw er; }
+  if (action === 'login' && (!j.user || !j.areas)) throw new Error(OLD_CODE);
   return j;
 }
 let toastT;
@@ -446,7 +451,7 @@ $('lockForm').addEventListener('submit', async e => {
     const j = await api('login');
     if ($('remember').checked) store.set('kz2', S); else store.del('kz2');
     store.set('kzL:' + S.sap, j);
-    enter(j);
+    enter(j); flush();
   } catch (err) { $('loginErr').textContent = err.message; }
   b.disabled = false; b.textContent = 'دخول';
 });
@@ -536,25 +541,25 @@ function bindPicker(el, onSet){
   };
 }
 
-$('nf').addEventListener('submit', async e => {
+$('nf').addEventListener('submit', e => {
   e.preventDefault();
   const problem = $('fProb').value.trim(), idea = $('fIdea').value.trim();
   const miss = !F.code ? 'اختار المنطقة.' : !problem ? 'اكتب المشكلة.' : !idea ? 'اكتب الفكرة.' : (F.type === 'اقتراح موجه' && !F.dirCat.length) ? 'اختار تصنيف الاقتراح الموجه.' : '';
   if (miss) { $('fErr').textContent = miss; return; }
   const dir = F.type === 'اقتراح موجه';
-  const data = {...F, dirCat: dir ? F.dirCat : [], loss: dir ? F.loss : '', cause: dir ? F.cause : '', problem, idea};
-  const supName = (L.areas.find(a => a.code === F.code) || {}).sup;
-  const b = $('fSend'); b.disabled = true; b.innerHTML = '<span class="spin"></span> بيتبعت…';
-  try {
-    const j = await api('submit', {data});
-    if (MINE) MINE.unshift(j.item);
-    resetForm(false); celebrate(supName);
-  } catch (err) {
-    if (err.net) { queue(data); resetForm(false); toast('مفيش نت دلوقتي، الاقتراح اتحفظ وهيتبعت لوحده أول ما النت يرجع'); }
-    else $('fErr').textContent = err.message;
-  }
-  b.disabled = false; b.textContent = 'ابعت الاقتراح';
+  const cid = 'w' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+  const data = {...F, cid, dirCat: dir ? F.dirCat : [], loss: dir ? F.loss : '', cause: dir ? F.cause : '', problem, idea};
+  const area = L.areas.find(a => a.code === F.code) || {};
+  queue(data);
+  if (MINE) MINE.unshift(pendingItem(data, area));
+  resetForm(false); celebrate(area.sup);
+  flush();
 });
+function pendingItem(d, area){
+  const n = new Date(), p = v => String(v).padStart(2, '0');
+  return {id: d.cid, dt: `${n.getFullYear()}-${p(n.getMonth() + 1)}-${p(n.getDate())}T${p(n.getHours())}:${p(n.getMinutes())}`, sap: S.sap, name: L.user.name, code: d.code, activity: area.activity, ideaSec: area.ideaSec, area: area.subArea,
+    type: d.type, dirCat: d.dirCat.join(' , '), loss: d.loss, cause: d.cause, problem: d.problem, idea: d.idea, kind: d.kind, benefits: d.benefits.join(' , '), dec: '', sup: area.sup, pend: true};
+}
 function celebrate(sup){
   $('doneTxt').textContent = sup ? `هيوصل لـ ${sup} يراجعه` : 'هيوصل لمشرفك يراجعه';
   $('done').hidden = false;
@@ -563,20 +568,42 @@ function celebrate(sup){
 $('doneAgain').onclick = () => { $('done').hidden = true; $('pg-new').scrollTo({top: 0, behavior: 'smooth'}); };
 $('doneMine').onclick = () => { $('done').hidden = true; go('mine'); };
 
-/* اقتراحات اتكتبت والنت فاصل */
+/* صندوق الإرسال: الاقتراح بيتحفظ على الموبايل الأول وبعدين يتبعت في الخلفية */
 const outbox = () => store.get('kzOut:' + S.sap) || [];
-function queue(d){ const o = outbox(); o.push(d); store.set('kzOut:' + S.sap, o); renderOutbox(); }
-function renderOutbox(){ const n = outbox().length; $('outbox').hidden = !n; $('outboxTxt').textContent = `فيه ${n} اقتراح مستني النت عشان يتبعت`; }
+const saveOut = o => { store.set('kzOut:' + S.sap, o); renderOutbox(); };
+function queue(d){ const o = outbox(); o.push(d); saveOut(o); }
+function renderOutbox(){
+  const o = outbox(), bad = o.filter(d => d.err), box = $('outbox');
+  box.hidden = !o.length;
+  if (!o.length) return;
+  if (bad.length) {
+    box.style.cursor = 'pointer';
+    box.innerHTML = `<span style="color:var(--no);font-weight:700">!</span><span>${bad.length} اقتراح ما اتبعتش: ${esc(bad[0].err)} <u>اضغط للمحاولة تاني</u></span>`;
+    box.onclick = () => { saveOut(outbox().map(d => ({...d, err: ''}))); flush(); };
+  } else {
+    box.style.cursor = ''; box.onclick = null;
+    box.innerHTML = `<span class="spin"></span><span>جاري إرسال ${o.length} اقتراح في الخلفية…</span>`;
+  }
+}
 let flushing = false;
 async function flush(){
-  if (flushing || !S.sap) return; const o = outbox(); if (!o.length) return; flushing = true;
-  const left = []; let sent = 0;
-  for (let i = 0; i < o.length; i++) {
-    try { const j = await api('submit', {data: o[i]}); sent++; if (MINE) MINE.unshift(j.item); }
-    catch (e) { if (e.net) { left.push(...o.slice(i)); break; } }
-  }
-  store.set('kzOut:' + S.sap, left); renderOutbox(); flushing = false;
-  if (sent) toast(`اتبعت ${sent} اقتراح كانوا مستنيين النت`);
+  if (flushing || !S.sap) return;
+  flushing = true; let netStop = false;
+  try {
+    let o = outbox();
+    for (const d of o.filter(x => !x.err)) {
+      try {
+        const j = await api('submit', {data: d}, 90000);
+        o = outbox().filter(x => x.cid !== d.cid); saveOut(o);
+        if (MINE) { const k = MINE.findIndex(x => x.id === d.cid); if (k > -1) MINE[k] = j.item; else MINE.unshift(j.item); if (tab === 'mine') renderMine(); }
+      } catch (e) {
+        if (e.net) { netStop = true; setTimeout(flush, 20000); break; }
+        o = outbox().map(x => x.cid === d.cid ? {...x, err: e.message} : x); saveOut(o);
+        toast('الاقتراح ما اتبعتش: ' + e.message, true);
+      }
+    }
+  } finally { flushing = false; }
+  if (!netStop && outbox().some(x => !x.err)) setTimeout(flush, 300);
 }
 addEventListener('online', flush);
 
@@ -620,7 +647,7 @@ function openDetail(x){
 
 /* ================= الكارت ================= */
 function card(x, i, opt = {}){
-  const s = st(x.dec);
+  const s = x.pend ? {k:'study', l:'بيتبعت…'} : st(x.dec);
   return `<div class="tag${i < 12 ? ' enter' : ''}" role="button" tabindex="0" style="--c:${STC[s.k]};--i:${i}" data-id="${esc(x.id)}">
     <div class="row1"><span>${esc(fDate(x.dt))}</span><span class="area">${esc(x.area)}</span><span class="pill">${s.l}</span></div>
     ${opt.who ? `<div class="whoL">${esc(x.name)} <span class="muted num" style="font-weight:400">${esc(x.sap)}</span></div>` : ''}
@@ -643,7 +670,7 @@ function animateIn(root){ requestAnimationFrame(() => requestAnimationFrame(() =
 async function loadMine(){
   const body = $('mineBody'); if (!MINE) body.innerHTML = skel(4);
   $('mineRefresh').classList.add('spinning');
-  try { const j = await api('mine'); MINE = j.mine; renderMine(); }
+  try { const j = await api('mine'); const pend = outbox().map(d => pendingItem(d, L.areas.find(a => a.code === d.code) || {})).filter(p => !j.mine.some(x => x.id === p.id)); MINE = pend.concat(j.mine); renderMine(); }
   catch (e) { if (!MINE) body.innerHTML = `<div class="empty">${esc(e.message)}<br><br><button class="btn ghost" id="mineRetry">جرب تاني</button></div>`, $('mineRetry').onclick = loadMine; else toast(e.message, true); }
   $('mineRefresh').classList.remove('spinning');
 }
@@ -663,7 +690,7 @@ function renderMine(){
     <div class="list" id="mList"></div><button class="btn ghost more" id="mMore" hidden>عرض المزيد</button>`;
   $('mTally').onclick = e => { const b = e.target.closest('button'); if (!b) return; mFilter = mFilter === b.dataset.f ? 'all' : b.dataset.f; mShown = PAGE; $('mTally').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x.dataset.f === mFilter)); renderMineList(); };
   let qT; $('mq').oninput = () => { clearTimeout(qT); qT = setTimeout(() => { mShown = PAGE; renderMineList(); }, 200); };
-  $('mList').onclick = e => { const b = e.target.closest('.tag'); if (b) openDetail(MINE.find(x => x.id === b.dataset.id)); };
+  $('mList').onclick = e => { const b = e.target.closest('.tag'); const x = b && MINE.find(y => y.id === b.dataset.id); if (x && !x.pend) openDetail(x); };
   $('mMore').onclick = () => { mShown += PAGE; renderMineList(); };
   renderMineList(); animateIn(body);
 }
@@ -849,14 +876,13 @@ function supAreas(){
   if (!saved) return showLock();
   S = saved;
   const cached = store.get('kzL:' + S.sap);
-  if (cached) enter(cached); else { $('lock').hidden = false; $('lockLoading').hidden = false; }
+  if (cached && cached.user && cached.areas) { enter(cached); flush(); } else { $('lock').hidden = false; $('lockLoading').hidden = false; }
   try {
     const j = await api('login'); store.set('kzL:' + S.sap, j);
-    if (cached) { L = j; $('tabSup').hidden = !L.isSup; } else enter(j);
-    flush();
+    if (cached && cached.user && cached.areas) { L = j; $('tabSup').hidden = !L.isSup; } else { enter(j); flush(); }
   } catch (e) {
     if (e.auth) { store.del('kz2'); showLock('الباسورد اتغير، ادخل تاني.'); }
-    else if (!cached) showLock(e.message);
+    else if (!(cached && cached.user)) showLock(e.message);
   }
 })();
 </script>
